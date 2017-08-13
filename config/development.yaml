@@ -1,0 +1,15 @@
+server:
+  applicationConnectors:
+  - type: http
+    port: 8080
+
+logging:
+  level: INFO
+  appenders:
+  - type: file
+    currentLogFilename: /var/log/leaderboard/leaderboard.log
+    archivedLogFilenamePattern: /var/log/leaderboard/leaderboard-%d.log
+  - type: console
+    threshold: ALL
+    timeZone: IST
+    logFormat: "%-5p [%d{ISO8601}] [%X{reqId} %X{txnId}] %c{1.}: %m\n%ex"
