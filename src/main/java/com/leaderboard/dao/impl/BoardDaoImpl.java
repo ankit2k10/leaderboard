@@ -63,13 +63,13 @@ public class BoardDaoImpl implements BoardDao {
 
     @Override
     public List<Integer> relative(Integer boardId, Integer userId, int n1, int n2) {
-        return relative(boardId, userId, n1, n1);
+        return relative(validateId(boardId), userId, n1, n1);
     }
 
     private Board validateId(Integer boardId) {
         Board board = entityMap.get(boardId);
         if(board == null) {
-            throw new BoardNotExistsException("Leaderboard does not exists");
+            throw new BoardNotExistsException("Invalid board id");
         }
         return board;
     }
@@ -150,7 +150,6 @@ public class BoardDaoImpl implements BoardDao {
         return ans;
     }
 
-
     private List<Integer> relative(Board board, Integer userId, int n1, int n2) {
         List<Integer> ans = new ArrayList<Integer>();
 
@@ -188,6 +187,7 @@ public class BoardDaoImpl implements BoardDao {
                 head = linkList.head();
                 while(i<n && head!=null) {
                     ans.add(head.get());
+                    head = head.getPrev();
                     i++;
                 }
             }
@@ -214,7 +214,8 @@ public class BoardDaoImpl implements BoardDao {
                 tail = linkList.tail();
                 while(i<n && tail!=null) {
                     ans.add(tail.get());
-                    i--;
+                    tail = tail.getNext();
+                    i++;
                 }
             }
             j--;

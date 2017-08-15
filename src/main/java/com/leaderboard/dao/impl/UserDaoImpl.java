@@ -2,7 +2,7 @@ package com.leaderboard.dao.impl;
 
 import com.leaderboard.dao.UserDao;
 import com.leaderboard.dao.entity.User;
-import com.leaderboard.dao.exceptions.UserNotExistsException;
+import com.leaderboard.dao.exceptions.DuplicateEntityException;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,7 +21,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public synchronized Integer save(User entity) {
         if(emailIds.contains(entity.getEmailId())) {
-            throw new UserNotExistsException("Duplicate email id, user exists");
+            throw new DuplicateEntityException("Duplicate email id, user exists");
         }
 
         int id = idStore.addAndGet(1);

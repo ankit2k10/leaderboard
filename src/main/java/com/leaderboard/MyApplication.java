@@ -7,9 +7,6 @@ package com.leaderboard;
 import com.google.inject.Stage;
 import com.hubspot.dropwizard.guice.GuiceBundle;
 import com.leaderboard.config.ApplicationConfiguration;
-import com.leaderboard.resources.HelloResource;
-import com.leaderboard.resources.LeaderBoardResource;
-import com.leaderboard.resources.UserResource;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -28,9 +25,7 @@ public class MyApplication extends Application<ApplicationConfiguration> {
 
     @Override
     public void run(ApplicationConfiguration configuration, Environment environment) throws Exception {
-        environment.jersey().register(new HelloResource());
-        environment.jersey().register(new UserResource());
-        environment.jersey().register(new LeaderBoardResource());
+
     }
 
     @Override

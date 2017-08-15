@@ -2,10 +2,15 @@ package com.leaderboard.resources;
 
 import com.google.inject.Inject;
 import com.leaderboard.dao.entity.Board;
+import com.leaderboard.dao.exceptions.BoardNotExistsException;
+import com.leaderboard.dao.exceptions.EntityNotExistsException;
+import com.leaderboard.dto.ErrorResponse;
 import com.leaderboard.dto.board.BoardCreateDto;
+import com.leaderboard.exceptions.ClientException;
+import com.leaderboard.mapper.BoardMapper;
 import com.leaderboard.mapper.ObjectMapper;
-import com.leaderboard.mapper.annotations.MyBoardMapper;
 import com.leaderboard.service.LeaderBoardService;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Min;
@@ -14,19 +19,16 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by ankit.chaudhury on 14/08/17.
  */
+@Slf4j
 @Path("/board")
 public class LeaderBoardResource {
 
-    @Inject
-    @MyBoardMapper
-    private ObjectMapper<BoardCreateDto, Board> mapper;
+    private ObjectMapper<BoardCreateDto, Board> mapper = new BoardMapper();
 
     @Inject
     private LeaderBoardService boardService;
@@ -36,18 +38,39 @@ public class LeaderBoardResource {
     public Response createBoard(@Valid BoardCreateDto createDto) {
         Board board = new Board();
         mapper.from(createDto, board);
-        int id = boardService.saveEntity(board);
-        return Response.status(Response.Status.CREATED).entity(id).build();
+        try {
+            int id = boardService.saveEntity(board);
+            log.info("Created board with id " + id);
+            return Response.status(Response.Status.CREATED).entity(id).build();
+        } catch (ClientException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode());
+            return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse).build();
+        } catch (Exception e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorResponse).build();
+        }
     }
 
     @PUT
-    @Path("/{boardId}/{userId}/{score}")
+    @Path("/{boardId}/user/{userId}/{score}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response updateScore(@PathParam("boardId") Integer boardId,
                                 @PathParam("userId") Integer userId,
                                 @Min(0) @PathParam("score") Integer score) {
-        boardService.updateScore(boardId, userId, score, 0);
-        return Response.status(Response.Status.NO_CONTENT).build();
+        try {
+            log.info("Updating user {} score to {}", userId, score);
+            boardService.updateScore(boardId, userId, score, 0);
+            return Response.status(Response.Status.NO_CONTENT).build();
+        } catch (EntityNotExistsException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND).entity(errorResponse).build();
+        } catch (ClientException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode());
+            return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse).build();
+        } catch (Exception e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorResponse).build();
+        }
     }
 
     @GET
@@ -55,17 +78,23 @@ public class LeaderBoardResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response top(@PathParam("boardId") Integer boardId,
                         @NotNull @Min(0) @QueryParam("n") Integer n) {
-        if(boardService == null) {
-            throw new RuntimeException("Boardservice is null");
-        }
-        List<Integer> userIds = boardService.top(boardId, n);
-        Map<String, List<Integer>> output = new HashMap<String, List<Integer>>();
-        if(userIds!=null)
-            output.put("data", userIds);
-        else
-            output.put("data", Collections.EMPTY_LIST);
+        try {
+            log.info("Fetching top {} users", n);
+            List<Integer> userIds = boardService.top(boardId, n);
+            if(userIds == null)
+                userIds = Collections.EMPTY_LIST;
 
-        return Response.status(Response.Status.OK).entity(output).build();
+            return Response.status(Response.Status.OK).entity(userIds).build();
+        } catch (BoardNotExistsException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND).entity(errorResponse).build();
+        } catch (ClientException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode());
+            return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse).build();
+        } catch (Exception e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorResponse).build();
+        }
     }
 
     @GET
@@ -74,14 +103,24 @@ public class LeaderBoardResource {
     public Response relative(@PathParam("boardId") Integer boardId,
                              @PathParam("userId") Integer userId,
                         @NotNull @Min(0) @QueryParam("n1") Integer n1,
-                        @NotNull @Min(0) @QueryParam("n1") Integer n2) {
-        List<Integer> userIds = boardService.relative(boardId, userId, n1, n2);
-        Map<String, List<Integer>> output = new HashMap<String, List<Integer>>();
-        if(userIds!=null)
-            output.put("data", userIds);
-        else
-            output.put("data", Collections.EMPTY_LIST);
+                        @NotNull @Min(0) @QueryParam("n2") Integer n2) {
+        try {
+            log.info("Fetching relative users to {}", userId);
+            List<Integer> userIds = boardService.relative(boardId, userId, n1, n2);
+            if(userIds == null)
+                userIds = Collections.EMPTY_LIST;
 
-        return Response.status(Response.Status.OK).entity(output).build();
+            return Response.status(Response.Status.OK).entity(userIds).build();
+        } catch (EntityNotExistsException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.NOT_FOUND.getStatusCode());
+            return Response.status(Response.Status.NOT_FOUND).entity(errorResponse).build();
+        } catch (ClientException e) {
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode());
+            return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse).build();
+        } catch (Exception e) {
+            log.error("Error in relative", e);
+            ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorResponse).build();
+        }
     }
 }
