@@ -13,4 +13,5 @@ public interface LinkList<E> {
     public Node<E> find(E e);
     public Node<E> head();
     public Node<E> tail();
+    public int size();
 }

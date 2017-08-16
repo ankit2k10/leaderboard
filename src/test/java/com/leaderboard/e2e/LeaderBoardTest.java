@@ -26,8 +26,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class LeaderBoardTest {
     private static int boardId;
-    private static List<Integer> userIds = new ArrayList<Integer>();
-    private static List<Integer> sortedList = new ArrayList<Integer>();
+    private static List<Integer> userIds;
+    private static List<Integer> sortedList;
 
     private static String baseUrl;
 
@@ -54,6 +54,7 @@ public class LeaderBoardTest {
     @Test
     public void t2CreateUsersTest() {
         UserCreateDto createDto = new UserCreateDto();
+        userIds = new ArrayList<Integer>();
         for (int i = 0; i < userCount; i++) {
             createDto.setEmailId("email_" + i);
             createDto.setName("user_" + i);
@@ -76,6 +77,7 @@ public class LeaderBoardTest {
             map.get(score).add(id);
         }
 
+        sortedList = new ArrayList<Integer>();
         for (int i = maxScore; i >= 0; i--) {
             if (map.containsKey(i)) {
                 sortedList.addAll(map.get(i));
@@ -97,19 +99,26 @@ public class LeaderBoardTest {
     public void t5RelativeRankTest() {
         assertThat(boardId != 0).isTrue();
         int n1 = 50, n2 = 50;
-        for (int i = 0; i < 10; i++) {
-            int userId = new Random().nextInt(userIds.size());
-            List<Integer> relatives = getRelative(userId, n1, n2);
-            int index1 = relatives.indexOf(userId);
-            int index2 = userIds.indexOf(userId);
-
-            for (int j = index1 - 1, k = index2 - 1; j >= 0; j--, k--) {
-                assertThat(userIds.get(k) == relatives.get(j));
+        for (int i = 0; i < 5; i++) {
+            for(int j = 0; j< 5; j++) {
+                int userId = new Random().nextInt(userIds.size());
+                validateRelativeRank(userId, n1, n2);
             }
+            t3UpdateScoreTest();
+        }
+    }
 
-            for (int j = index1 + 1, k = index2 + 1; j < relatives.size(); j++, k++) {
-                assertThat(userIds.get(k) == relatives.get(j));
-            }
+    private void validateRelativeRank(int userId, int n1, int n2) {
+        List<Integer> relatives = getRelative(userId, n1, n2);
+        int index1 = relatives.indexOf(userId);
+        int index2 = userIds.indexOf(userId);
+
+        for (int j = index1 - 1, k = index2 - 1; j >= 0; j--, k--) {
+            assertThat(userIds.get(k) == relatives.get(j));
+        }
+
+        for (int j = index1 + 1, k = index2 + 1; j < relatives.size(); j++, k++) {
+            assertThat(userIds.get(k) == relatives.get(j));
         }
     }
 

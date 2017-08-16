@@ -68,6 +68,7 @@ public class LeaderBoardResource {
             ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.BAD_REQUEST.getStatusCode());
             return Response.status(Response.Status.BAD_REQUEST).entity(errorResponse).build();
         } catch (Exception e) {
+            log.error("Error in updating score", e);
             ErrorResponse errorResponse = new ErrorResponse(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(errorResponse).build();
         }
